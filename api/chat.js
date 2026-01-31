@@ -1,30 +1,38 @@
 import fetch from "node-fetch";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = "gemini-1.5-pro";
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const MODEL = "llama3-8b-8192"; // Fast and efficient model on Groq
 
-// --- USER PROVIDED LOGIC ---
+// --- GROQ API LOGIC ---
 async function sendMessage(userMessage) {
-    const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+    const url = "https://api.groq.com/openai/v1/chat/completions";
 
-    console.log("Connecting to Gemini...", url);
+    console.log("Connecting to Groq...", url);
 
     const response = await fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${GROQ_API_KEY}`
         },
         body: JSON.stringify({
-            contents: [
+            messages: [
                 {
-                    parts: [{ text: userMessage }],
+                    role: "system",
+                    content: "You are a WhatsApp-style AI assistant. Respond in short, clear Hinglish messages (Hindi+English mix). Keep replies friendly and human-like."
                 },
+                {
+                    role: "user",
+                    content: userMessage
+                }
             ],
+            model: MODEL,
+            temperature: 0.7
         }),
     });
 
     const rawText = await response.text();
-    console.log("🔥 GEMINI RAW RESPONSE:", rawText);
+    console.log("🔥 GROQ RAW RESPONSE:", rawText);
 
     if (!response.ok) {
         throw new Error(rawText);
@@ -34,11 +42,11 @@ async function sendMessage(userMessage) {
     try {
         data = JSON.parse(rawText);
     } catch (e) {
-        throw new Error("Gemini returned non-JSON response");
+        throw new Error("Groq returned non-JSON response");
     }
 
     return (
-        data.candidates?.[0]?.content?.parts?.[0]?.text ||
+        data.choices?.[0]?.message?.content ||
         "Reply nahi aa paayi 😅"
     );
 }
@@ -66,16 +74,12 @@ export default async function handler(req, res) {
     try {
         const { message } = req.body;
 
-        if (!GEMINI_API_KEY) {
-            return res.status(500).json({ error: "Server Error: Missing GEMINI_API_KEY" });
+        if (!GROQ_API_KEY) {
+            return res.status(500).json({ error: "Server Error: Missing GROQ_API_KEY" });
         }
 
-        // Injecting WhatsApp Persona into the message to keep the bot smart
-        const systemPrompt = "You are a WhatsApp-style AI assistant. Respond in short, clear Hinglish messages (Hindi+English mix). Keep replies friendly and human-like.";
-        const fullPrompt = `${systemPrompt}\n\nUser: ${message}`;
-
-        // Calling the user's logic
-        const botReply = await sendMessage(fullPrompt);
+        // Calling the Groq logic directly
+        const botReply = await sendMessage(message);
 
         // ✅ ALWAYS JSON (User's requested format)
         res.status(200).json({
