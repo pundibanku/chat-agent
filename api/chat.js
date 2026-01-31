@@ -80,11 +80,18 @@ export default async function handler(req, res) {
         // Calling the user's logic
         const botReply = await sendMessage(fullPrompt);
 
-        res.status(200).json({ reply: botReply });
+        // ✅ ALWAYS JSON (User's requested format)
+        res.status(200).json({
+            success: true,
+            reply: botReply
+        });
 
     } catch (error) {
-        console.error("Handler Error:", error);
-        // Returning the raw error details as requested by the user's logic wanting debugging
-        res.status(500).json({ reply: `Connection Error: ${error.message}` });
+        console.error("CHAT ERROR:", error.message);
+        // ✅ JSON ERROR RESPONSE (VERY IMPORTANT)
+        res.status(500).json({
+            success: false,
+            reply: "Server busy hai 😅 thodi der baad try karo"
+        });
     }
 }
