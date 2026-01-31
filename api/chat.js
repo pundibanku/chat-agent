@@ -17,7 +17,6 @@ async function sendMessage(userMessage) {
         body: JSON.stringify({
             contents: [
                 {
-                    role: "user",
                     parts: [{ text: userMessage }],
                 },
             ],
