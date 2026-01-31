@@ -1,4 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import fetch from "node-fetch";
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const MODEL = "gemini-1.5-pro"; // safest model
 
 export default async function handler(req, res) {
     // 1. CORS Headers
@@ -15,51 +18,55 @@ export default async function handler(req, res) {
         return;
     }
 
-    // 2. Validate API Key
-    const API_KEY = process.env.GEMINI_API_KEY;
-    if (!API_KEY) {
-        return res.status(500).json({ error: "Server Error: Missing GEMINI_API_KEY" });
-    }
-
     if (req.method !== 'POST') {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
 
     try {
         const { message } = req.body;
-        const genAI = new GoogleGenerativeAI(API_KEY);
 
-        // Strategy: Try Flash first (faster/cheaper), fallback to Pro (stable)
-        // Strategy: User requested 'gemini-1.5-pro' or 'gemini-pro'. 
-        // Using 'gemini-1.5-pro' for high quality instructions compliance.
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        if (!GEMINI_API_KEY) {
+            throw new Error("Missing GEMINI_API_KEY in environment variables");
+        }
 
-        const systemInstruction = `
-You are a WhatsApp-style AI assistant running on Google Gemini API.
+        const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
-BEHAVIOR RULES:
-- Respond in short, clear WhatsApp-style messages.
-- Use Hinglish (Hindi + English mix).
-- Keep replies friendly, natural, and human-like.
-- Avoid long paragraphs; prefer 1–3 lines per message.
-- Do not mention API errors, system issues, or internal configurations to the user.
+        // Injecting WhatsApp Persona into the message
+        const systemPrompt = "You are a WhatsApp-style AI assistant. Respond in short, clear Hinglish messages (Hindi+English mix). Keep replies friendly and human-like.";
+        const fullPrompt = `${systemPrompt}\n\nUser: ${message}`;
 
-ROLE:
-You help users with business, tech, and daily questions as a smart WhatsApp assistant.
-        `;
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        role: "user",
+                        parts: [{ text: fullPrompt }],
+                    },
+                ],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1024,
+                },
+            }),
+        });
 
-        const result = await model.generateContent(`${systemInstruction}\n\nUser Message: ${message}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Gemini Error:", errorText);
+            throw new Error(`Gemini API failed: ${errorText}`);
+        }
 
-        const response = await result.response;
-        const botReply = response.text() || "Sorry, I couldn't generate a response.";
+        const data = await response.json();
+        const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
         res.status(200).json({ reply: botReply });
 
     } catch (error) {
-        console.error("API Error:", error);
-        // detailed error for client debugging
-        res.status(500).json({
-            reply: `Connection Error: ${error.message}. Please check if the 'Generative Language API' is enabled in your Google Cloud Console.`
-        });
+        console.error("Handler Error:", error);
+        res.status(500).json({ reply: `Connection Error: ${error.message}` });
     }
 }
