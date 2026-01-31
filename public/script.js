@@ -153,16 +153,28 @@ async function processMessage(text) {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ message: text })
                         });
-                        const data = await apiResponse.json();
-                        response = data.reply || "No reply from server";
-                        source = "Real API (Secure)";
-                        if (response) saveToCache(cleanText, response);
+
+                        let data;
+                        try {
+                            data = await apiResponse.json();
+                        } catch (e) {
+                            throw new Error("Invalid JSON from server");
+                        }
+
+                        if (!data.success) {
+                            // Backend reported failure
+                            response = data.reply || "⚠️ Server issue, please retry";
+                            source = "API Error (Backend)";
+                        } else {
+                            // Success
+                            response = data.reply;
+                            source = "Real API (Secure)";
+                            if (response) saveToCache(cleanText, response);
+                        }
                     } catch (error) {
                         console.error("API Error Details:", error);
-                        // response = "Sorry, I am facing some connection issues."; 
-                        // Show actual error for debugging (User can remove later)
-                        response = "Connection Error: " + (error.message || "Unknown error");
-                        source = "API Error";
+                        response = "Server busy hai 😅 thodi der baad try karo";
+                        source = "Connection Error";
                     }
                 } else {
                     // DEFAULT: Simulated Logic
