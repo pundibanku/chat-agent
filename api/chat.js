@@ -24,13 +24,11 @@ async function sendMessage(userMessage) {
         }),
     });
 
-    const rawText = await response.text(); // 🔥 VERY IMPORTANT
-
-    // Debug log (optional)
-    console.log("RAW RESPONSE:", rawText);
+    const rawText = await response.text();
+    console.log("🔥 GEMINI RAW RESPONSE:", rawText);
 
     if (!response.ok) {
-        throw new Error(`Gemini API Error: ${rawText}`);
+        throw new Error(rawText);
     }
 
     let data;
@@ -86,12 +84,12 @@ export default async function handler(req, res) {
             reply: botReply
         });
 
-    } catch (error) {
-        console.error("CHAT ERROR:", error.message);
+    } catch (err) {
+        console.error("CHAT ERROR:", err.message);
         // ✅ JSON ERROR RESPONSE (VERY IMPORTANT)
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            reply: "Server busy hai 😅 thodi der baad try karo"
+            reply: "DEBUG ERROR: " + err.message
         });
     }
 }
