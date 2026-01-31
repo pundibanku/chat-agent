@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sales Agent</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;500;700&family=Roboto:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="profile-info">
+                <div class="avatar">
+                    <img src="https://ui-avatars.com/api/?name=AI+Agent&background=25D366&color=fff" alt="AI Agent">
+                </div>
+                <div class="contact-details">
+                    <h1 class="contact-name">AI Business Agent</h1>
+                    <span class="status">Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Area -->
+        <main class="chat-area" id="chat-area">
+            <!-- Messages will be injected here -->
+        </main>
+
+        <!-- Input Area -->
+        <footer class="input-area">
+            <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off">
+            <button id="send-btn">
+                <svg viewBox="0 0 24 24" width="24" height="24" class="">
+                    <path fill="currentColor"
+                        d="M1.101 21.757 23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path>
+                </svg>
+            </button>
+        </footer>
+    </div>
+
+    <!-- Hidden link to admin for owner (simulated) -->
+    <!-- In a real app, this would be a separate route/login -->
+    <a href="admin.html"
+        style="position: fixed; bottom: 5px; right: 5px; opacity: 0; pointer-events: auto; cursor: default;"
+        title="Admin Panel">.</a>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
